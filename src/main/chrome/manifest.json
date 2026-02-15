@@ -1,22 +1,22 @@
 {
   "name": "__MSG__pluginName__",
   "description": "__MSG__pluginDescription__",
-  "manifest_version": 2,
-  "minimum_chrome_version": "21",
+  "manifest_version": 3,
+  "minimum_chrome_version": "88",
 
   "version": "1.0",
 
   "homepage_url": "https://consulo.io",
 
   "background": {
-    "page": "html/main.html"
+    "service_worker": "js/background.js"
   },
 
   "devtools_page": "html/devtools.html",
 
   "options_page": "html/options.html",
 
-  "page_action": {
+  "action": {
     "default_icon": "img/icon16.png",
     "default_title": "Open Consulo actions",
     "default_popup": "html/popup.html"
@@ -29,12 +29,14 @@
     "storage"
   ],
 
-  "content_security_policy": "default-src 'self'; connect-src ws://127.0.0.1:62242/",
+  "content_security_policy": {
+    "extension_pages": "default-src 'self'; connect-src ws://127.0.0.1:62242/"
+  },
 
   "icons": {
     "16": "img/icon16.png",
     "48": "img/icon48.png",
-    "128": "img/icon128.png"
+    "128": "img/icon16.png"
   },
 
   "default_locale": "en"

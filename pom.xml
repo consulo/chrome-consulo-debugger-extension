@@ -15,30 +15,25 @@
   - limitations under the License.
   -->
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>consulo</groupId>
-		<artifactId>arch.ide-provided</artifactId>
-		<version>2-SNAPSHOT</version>
-		<relativePath/>
-	</parent>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<groupId>consulo.external</groupId>
-	<artifactId>chrome.consulo.debugger.extension</artifactId>
-	<version>2-SNAPSHOT</version>
-	<packaging>crx</packaging>
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>com.btmatthews.maven.plugins</groupId>
-				<artifactId>crx-maven-plugin</artifactId>
-				<version>1.2.1</version>
-				<extensions>true</extensions>
-				<configuration>
-					<pemFile>${project.basedir}/key.pem</pemFile>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+    <groupId>consulo.external</groupId>
+    <artifactId>chrome.consulo.debugger.extension</artifactId>
+    <version>1.0</version>
+    <packaging>zip</packaging>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>co.aurasphere.maven.plugins</groupId>
+                <artifactId>zip-maven-plugin</artifactId>
+                <version>1.0.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <inputDirectory>${project.basedir}/src/main/chrome</inputDirectory>
+                    <zipName>chrome-consulo-debugger-extension-${project.version}</zipName>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

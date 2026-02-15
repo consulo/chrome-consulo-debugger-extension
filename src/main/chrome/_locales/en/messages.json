@@ -157,7 +157,7 @@
     "_SelectMode": {
         "message": "Inspect in Consulo Mode"
     },
-    "_DebugInNetBeans": {
+    "_DebugInConsulo": {
         "message": "Debug in Consulo"
     },
     "_PresetTitle": {
@@ -194,7 +194,7 @@
         "message": "Consulo Extension has Closed"
     },
     "_Warning_DisconnectedDebuggerPerex": {
-        "message": "To run the NetBeans Connector without the debugging infobar, select the Enable Silent Debugging flag in Chrome."
+        "message": "To run the Consulo Connector without the debugging infobar, select the Enable Silent Debugging flag in Chrome."
     },
     "_Warning_DisconnectedDebuggerBody": {
         "message": "It looks like you closed the debugging infobar by clicking its Cancel button or Close icon.  Unless you enable silent debugging, Chrome requires that this remain open while working with the Consulo extension. Note: although the Consulo Connector has closed, changes in Chrome and Consulo are still synchronized."
@@ -207,7 +207,7 @@
         "message": "Unfortunately, on OS X, the minimal width of the Chrome window is 400 pixels."
     },
 
-    "_DevTools_PropagateChangesToNetBeans": {
+    "_DevTools_PropagateChangesToConsulo": {
         "message": "Propagate changes done in the CDT back to the Consulo IDE and save them"
     }
 

@@ -17,13 +17,13 @@
  * under the License.
  */
 
-var NetBeans_Panel = {};
+var Consulo_Panel = {};
 
-NetBeans_Panel._backgroundPageConnection = null;
-NetBeans_Panel._propagateChangesCheckbox = null;
+Consulo_Panel._backgroundPageConnection = null;
+Consulo_Panel._propagateChangesCheckbox = null;
 
-NetBeans_Panel.init = function() {
-    if (NetBeans_Panel._backgroundPageConnection !== null) {
+Consulo_Panel.init = function() {
+    if (Consulo_Panel._backgroundPageConnection !== null) {
         return;
     }
     this._backgroundPageConnection = chrome.runtime.connect();
@@ -32,7 +32,7 @@ NetBeans_Panel.init = function() {
     this._load();
 };
 // register events
-NetBeans_Panel._registerEvents = function() {
+Consulo_Panel._registerEvents = function() {
     var that = this;
     this._backgroundPageConnection.onMessage.addListener(function(message) {
         if (message.enabled !== undefined) {
@@ -47,7 +47,7 @@ NetBeans_Panel._registerEvents = function() {
     }, false);
 };
 // load initial state
-NetBeans_Panel._load = function() {
+Consulo_Panel._load = function() {
     this._backgroundPageConnection.postMessage({
         event: 'areChangesPropagated'
     });
@@ -55,5 +55,5 @@ NetBeans_Panel._load = function() {
 
 // run!
 window.addEventListener('load', function() {
-    NetBeans_Panel.init();
+    Consulo_Panel.init();
 }, false);

@@ -1,3 +1,8 @@
 # Chrome Extension for debugging inside Consulo
 
-# Please do not use. It's broken for now, and will produce unexpected problems
+## How to Install (Chrome Based)
+ * Download last build [link](https://github.com/consulo/incubating-chrome-consulo-debugger-extension/archive/refs/heads/master.zip)
+ * Unpack zip to `dir`
+ * Go to `Chrome` -> `Settings` -> `Extensions`
+ * Turn on `Developer Mode`
+ * Click on button `Load Upacked` and select `dir` where extension was extracted

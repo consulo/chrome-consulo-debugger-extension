@@ -17,80 +17,98 @@
  * under the License.
  */
 
-// references from bg page
-var NetBeans = chrome.extension.getBackgroundPage().NetBeans;
-var NetBeans_Presets = chrome.extension.getBackgroundPage().NetBeans_Presets;
-var NetBeans_Preset = chrome.extension.getBackgroundPage().NetBeans_Preset;
-var NetBeans_ViewPort = chrome.extension.getBackgroundPage().NetBeans_ViewPort;
+// MV3: Consulo_Preset types are needed locally for icon display
+var Consulo_Preset_Types = {
+    DESKTOP: { ident: 'DESKTOP', title: I18n.message('_Desktop') },
+    NETBOOK: { ident: 'NETBOOK', title: I18n.message('_Netbook') },
+    WIDESCREEN: { ident: 'WIDESCREEN', title: I18n.message('_Widescreen') },
+    TABLET_LANDSCAPE: { ident: 'TABLET_LANDSCAPE', title: I18n.message('_TabletLandscape') },
+    TABLET_PORTRAIT: { ident: 'TABLET_PORTRAIT', title: I18n.message('_TabletPortrait') },
+    SMARTPHONE_LANDSCAPE: { ident: 'SMARTPHONE_LANDSCAPE', title: I18n.message('_SmartphoneLandscape') },
+    SMARTPHONE_PORTRAIT: { ident: 'SMARTPHONE_PORTRAIT', title: I18n.message('_SmartphonePortrait') }
+};
+
+var Consulo_Preset_allTypes = [
+    Consulo_Preset_Types.DESKTOP,
+    Consulo_Preset_Types.NETBOOK,
+    Consulo_Preset_Types.WIDESCREEN,
+    Consulo_Preset_Types.TABLET_LANDSCAPE,
+    Consulo_Preset_Types.TABLET_PORTRAIT,
+    Consulo_Preset_Types.SMARTPHONE_LANDSCAPE,
+    Consulo_Preset_Types.SMARTPHONE_PORTRAIT
+];
+
+function typeForIdent(ident) {
+    for (var i in Consulo_Preset_allTypes) {
+        if (Consulo_Preset_allTypes[i].ident === ident) {
+            return Consulo_Preset_allTypes[i];
+        }
+    }
+    return Consulo_Preset_allTypes[0];
+}
 
 /**
  * Window presets menu.
  */
-var NetBeans_PresetMenu = {};
-// menu container
-NetBeans_PresetMenu._container = null;
-// menu presets
-NetBeans_PresetMenu._presets = null;
-// show the menu
-NetBeans_PresetMenu.show = function(presets, activeTab) {
+var Consulo_PresetMenu = {};
+Consulo_PresetMenu._container = null;
+Consulo_PresetMenu._presets = null;
+
+Consulo_PresetMenu.show = function(presets, activeTab, state) {
     this._init(activeTab);
-    this._initSelectionMode(activeTab);
-    this._initDebugInNetBeans(activeTab);
+    this._initSelectionMode(activeTab, state);
+    this._initDebugInConsulo(activeTab, state);
     this._presets = presets;
-    this._putPresets(this._presets);
+    this._putPresets(this._presets, state.viewPort);
 };
-NetBeans_PresetMenu.hide = function() {
+Consulo_PresetMenu.hide = function() {
     window.close();
 };
-NetBeans_PresetMenu.resetPage = function() {
+Consulo_PresetMenu.resetPage = function() {
     var that = this;
-    NetBeans.resetPageSize(function() {
+    chrome.runtime.sendMessage({type: 'resetPageSize'}, function() {
         that.hide();
     });
 };
-NetBeans_PresetMenu.resizePage = function(preset) {
+Consulo_PresetMenu.resizePage = function(preset) {
     var that = this;
-    NetBeans.resizePage(preset, function() {
+    chrome.runtime.sendMessage({type: 'resizePage', preset: preset}, function() {
         that.hide();
     });
 };
-NetBeans_PresetMenu.setAutoPresetActive = function() {
+Consulo_PresetMenu.setAutoPresetActive = function() {
     document.getElementById('autoPresetMenu').setAttribute('class', 'active');
     document.getElementById('autoPresetRadio').setAttribute('checked', 'checked');
 };
 /*** ~Private ***/
-// menu init
-NetBeans_PresetMenu._init = function(activeTab) {
+Consulo_PresetMenu._init = function(activeTab) {
     if (this._container !== null) {
         return;
     }
     this._container = document.getElementById('presetMenu');
     this._registerEvents(activeTab);
 };
-// selection mode init
-NetBeans_PresetMenu._initSelectionMode = function(activeTab) {
+Consulo_PresetMenu._initSelectionMode = function(activeTab, state) {
     var selectionMode = document.getElementById('selectionModeCheckBox');
-    selectionMode.checked = NetBeans.getSelectionMode();
+    selectionMode.checked = state.selectionMode;
     var selectionModeMenu = document.getElementById('selectionModeMenu');
-    var display = NetBeans.debuggedTab === activeTab.id ? 'block' : 'none';
+    var display = state.debuggedTab === activeTab.id ? 'block' : 'none';
     selectionModeMenu.style.display = display;
     var selectionModeSeparator = document.getElementById('selectionModeSeparator');
     if (selectionModeSeparator) {
         selectionModeSeparator.style.display = display;
     }
 };
-// Debug in NetBeans init
-NetBeans_PresetMenu._initDebugInNetBeans = function(activeTab) {
-    var menu = document.getElementById('debugInNetBeansMenu');
-    var display = NetBeans.ideVersion === "7.4" || NetBeans.debuggedTab === activeTab.id ? 'none' : 'block';
+Consulo_PresetMenu._initDebugInConsulo = function(activeTab, state) {
+    var menu = document.getElementById('debugInConsuloMenu');
+    var display = state.debuggedTab === activeTab.id ? 'none' : 'block';
     menu.style.display = display;
-    var separator = document.getElementById('debugInNetBeansSeparator');
+    var separator = document.getElementById('debugInConsuloSeparator');
     if (separator) {
         separator.style.display = display;
     }
 };
-// register events
-NetBeans_PresetMenu._registerEvents = function(activeTab) {
+Consulo_PresetMenu._registerEvents = function(activeTab) {
     var that = this;
     document.getElementById('autoPresetMenu').addEventListener('click', function() {
         that.resetPage();
@@ -101,33 +119,29 @@ NetBeans_PresetMenu._registerEvents = function(activeTab) {
     document.getElementById('selectionModeMenu').addEventListener('click', function(event) {
         that._updateSelectionMode(event.target.id !== 'selectionModeCheckBox');
     }, false);
-    document.getElementById('debugInNetBeansMenu').addEventListener('click', function() {
-        that._debugInNetBeans(activeTab);
+    document.getElementById('debugInConsuloMenu').addEventListener('click', function() {
+        that._debugInConsulo(activeTab);
     }, false);
 };
-// clean and put presets to the menu
-NetBeans_PresetMenu._putPresets = function() {
+Consulo_PresetMenu._putPresets = function(presets, viewPort) {
     var menu = document.getElementById('menuPresets');
-    // clean
     menu.innerHTML = '';
-    for (var p in this._presets) {
-        var preset = this._presets[p];
-        var activePreset = NetBeans_ViewPort.width == preset.width && NetBeans_ViewPort.height == preset.height;
-        // item
+    if (!presets) return;
+    for (var p in presets) {
+        var preset = presets[p];
+        var activePreset = viewPort && viewPort.width == preset.width && viewPort.height == preset.height;
         var item = document.createElement('a');
         item.setAttribute('href', '#');
         item.setAttribute('tabindex', '-1');
         item.setAttribute('title', I18n.message('_PresetTitle', [preset.displayName, preset.width, preset.height]));
-        // wrap function to another function so current index is copied (otherwise, the last index will be always used)
         item.addEventListener('click', function(presetIndex) {
             return function() {
-                NetBeans_PresetMenu.resizePage(presetIndex);
+                Consulo_PresetMenu.resizePage(presetIndex);
             };
         } (p), false);
         if (activePreset) {
             item.setAttribute('class', 'active');
         }
-        // formitem
         var formItemDiv = document.createElement('div');
         formItemDiv.setAttribute('class', 'form-item');
         var radio = document.createElement('input');
@@ -138,8 +152,7 @@ NetBeans_PresetMenu._putPresets = function() {
         }
         formItemDiv.appendChild(radio);
         item.appendChild(formItemDiv);
-        // icon
-        var presetType = NetBeans_Preset.typeForIdent(preset.type);
+        var presetType = typeForIdent(preset.type);
         var iconDiv = document.createElement('div');
         iconDiv.setAttribute('class', 'icon');
         var img = document.createElement('img');
@@ -148,43 +161,38 @@ NetBeans_PresetMenu._putPresets = function() {
         img.setAttribute('title', presetType.title);
         iconDiv.appendChild(img);
         item.appendChild(iconDiv);
-        // label
         var labelDiv = document.createElement('div');
         labelDiv.setAttribute('class', 'label');
-        // label - main
         var mainLabelDiv = document.createElement('div');
         mainLabelDiv.setAttribute('class', 'main');
         mainLabelDiv.appendChild(document.createTextNode(preset.displayName));
         labelDiv.appendChild(mainLabelDiv);
-        // label - info
         var infoLabelDiv = document.createElement('div');
         infoLabelDiv.setAttribute('class', 'info');
         infoLabelDiv.appendChild(document.createTextNode(I18n.message('_PresetWidthHeight', [preset.width, preset.height])));
         labelDiv.appendChild(infoLabelDiv);
         item.appendChild(labelDiv);
-        // append item
         menu.appendChild(item);
     }
 };
-// show preset customizer
-NetBeans_PresetMenu._showPresetCustomizer = function() {
-    NetBeans.showPresetCustomizer();
+Consulo_PresetMenu._showPresetCustomizer = function() {
+    chrome.runtime.sendMessage({type: 'showPresetCustomizer'});
     this.hide();
 };
 
-NetBeans_PresetMenu._updateSelectionMode = function(switchCheckBoxValue) {
+Consulo_PresetMenu._updateSelectionMode = function(switchCheckBoxValue) {
     var checkbox = document.getElementById('selectionModeCheckBox');
     if (switchCheckBoxValue) {
         checkbox.checked = !checkbox.checked;
     }
     var selectionMode = checkbox.checked;
-    NetBeans.setSelectionMode(selectionMode);
+    chrome.runtime.sendMessage({type: 'setSelectionMode', selectionMode: selectionMode});
     this.hide();
 };
 
-NetBeans_PresetMenu._debugInNetBeans = function(activeTab) {
-    NetBeans.sendMessage({
-        message: 'inspect',
+Consulo_PresetMenu._debugInConsulo = function(activeTab) {
+    chrome.runtime.sendMessage({
+        type: 'attach_debugger',
         tabId: activeTab.id,
         url: activeTab.url
     });
@@ -193,21 +201,25 @@ NetBeans_PresetMenu._debugInNetBeans = function(activeTab) {
 
 // run!
 window.addEventListener('load', function() {
-    NetBeans.detectViewPort(function() {
-        NetBeans.getWindowInfo(function(window) {
+    chrome.runtime.sendMessage({type: 'detectViewPort'}, function() {
+        chrome.runtime.sendMessage({type: 'getWindowInfo'}, function(winResponse) {
+            var win = winResponse.window;
             var activeTab = null;
-            var i;
-            for (i=0; i<window.tabs.length; i++) {
-                var tab = window.tabs[i];
+            for (var i=0; i<win.tabs.length; i++) {
+                var tab = win.tabs[i];
                 if (tab.active) {
                     activeTab = tab;
                     break;
                 }
             }
-            NetBeans_PresetMenu.show(NetBeans_Presets.getPresets(), activeTab);
-            if (window.state === 'maximized') {
-                NetBeans_PresetMenu.setAutoPresetActive();
-            }
+            chrome.runtime.sendMessage({type: 'getState'}, function(state) {
+                chrome.runtime.sendMessage({type: 'getPresets'}, function(presetsResponse) {
+                    Consulo_PresetMenu.show(presetsResponse.presets, activeTab, state);
+                    if (win.state === 'maximized') {
+                        Consulo_PresetMenu.setAutoPresetActive();
+                    }
+                });
+            });
         });
     });
 }, false);

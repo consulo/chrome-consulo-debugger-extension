@@ -17,47 +17,52 @@
  * under the License.
  */
 
-// references from bg page
-var INFOBAR = chrome.extension.getBackgroundPage().NetBeans.INFOBAR;
-var NetBeans_Presets = chrome.extension.getBackgroundPage().NetBeans_Presets;
-var NetBeans_Preset = chrome.extension.getBackgroundPage().NetBeans_Preset;
-var NetBeans_Warnings = chrome.extension.getBackgroundPage().NetBeans_Warnings;
+// MV3: local preset type definitions (no access to background page)
+var Consulo_Preset_allTypes = [
+    { ident: 'DESKTOP', title: I18n.message('_Desktop') },
+    { ident: 'NETBOOK', title: I18n.message('_Netbook') },
+    { ident: 'WIDESCREEN', title: I18n.message('_Widescreen') },
+    { ident: 'TABLET_LANDSCAPE', title: I18n.message('_TabletLandscape') },
+    { ident: 'TABLET_PORTRAIT', title: I18n.message('_TabletPortrait') },
+    { ident: 'SMARTPHONE_LANDSCAPE', title: I18n.message('_SmartphoneLandscape') },
+    { ident: 'SMARTPHONE_PORTRAIT', title: I18n.message('_SmartphonePortrait') }
+];
+
+function typeForIdent(ident) {
+    for (var i in Consulo_Preset_allTypes) {
+        if (Consulo_Preset_allTypes[i].ident === ident) {
+            return Consulo_Preset_allTypes[i];
+        }
+    }
+    console.error('Type not found for ident: ' + ident);
+    return Consulo_Preset_allTypes[0];
+}
+
+// MV3: state is fetched from background via messaging
+var INFOBAR = false;
 
 /**
  * Preset customizer.
  */
-var NetBeans_PresetCustomizer = {};
-// customizer container
-NetBeans_PresetCustomizer._container = null;
-// help button
-NetBeans_PresetCustomizer._moreHelpButton = null;
-// presets container
-NetBeans_PresetCustomizer._rowContainer = null;
-// add button
-NetBeans_PresetCustomizer._addPresetButton = null;
-// remove button
-NetBeans_PresetCustomizer._removePresetButton = null;
-// move up button
-NetBeans_PresetCustomizer._moveUpPresetButton = null;
-// move down button
-NetBeans_PresetCustomizer._moveDownPresetButton = null;
-// OK button
-NetBeans_PresetCustomizer._okButton = null;
-// reset warnings button
-NetBeans_PresetCustomizer._resetWarningsButton = null;
-// presets
-NetBeans_PresetCustomizer._presets = null;
-// active/selected preset
-NetBeans_PresetCustomizer._activePreset = null;
-// show customizer
-NetBeans_PresetCustomizer.show = function(presets) {
+var Consulo_PresetCustomizer = {};
+Consulo_PresetCustomizer._container = null;
+Consulo_PresetCustomizer._moreHelpButton = null;
+Consulo_PresetCustomizer._rowContainer = null;
+Consulo_PresetCustomizer._addPresetButton = null;
+Consulo_PresetCustomizer._removePresetButton = null;
+Consulo_PresetCustomizer._moveUpPresetButton = null;
+Consulo_PresetCustomizer._moveDownPresetButton = null;
+Consulo_PresetCustomizer._okButton = null;
+Consulo_PresetCustomizer._resetWarningsButton = null;
+Consulo_PresetCustomizer._presets = null;
+Consulo_PresetCustomizer._activePreset = null;
+Consulo_PresetCustomizer.show = function(presets) {
     this._init();
     this._presets = presets;
     this._putPresets(this._presets);
 };
 /*** ~Private ***/
-// customizer init
-NetBeans_PresetCustomizer._init = function() {
+Consulo_PresetCustomizer._init = function() {
     if (this._rowContainer !== null) {
         return;
     }
@@ -74,12 +79,10 @@ NetBeans_PresetCustomizer._init = function() {
     this._resetWarningsButton = document.getElementById('resetWarnings');
     this._registerEvents();
 };
-// hide customizer
-NetBeans_PresetCustomizer._hide = function() {
+Consulo_PresetCustomizer._hide = function() {
     window.close();
 };
-// register events
-NetBeans_PresetCustomizer._registerEvents = function() {
+Consulo_PresetCustomizer._registerEvents = function() {
     var that = this;
     this._moreHelpButton.addEventListener('click', function() {
         that._switchHelp();
@@ -106,8 +109,7 @@ NetBeans_PresetCustomizer._registerEvents = function() {
         that._resetWarnings();
     }, false);
 };
-// put presets to the customizer?
-NetBeans_PresetCustomizer._putPresets = function(presets) {
+Consulo_PresetCustomizer._putPresets = function(presets) {
     if (this._presets === null) {
         this._putNoPresets();
         this._enableButtons();
@@ -115,8 +117,7 @@ NetBeans_PresetCustomizer._putPresets = function(presets) {
         this._putPresetsInternal(presets);
     }
 };
-// no presets available (netbeans not running)
-NetBeans_PresetCustomizer._putNoPresets = function() {
+Consulo_PresetCustomizer._putNoPresets = function() {
     var row = document.createElement('tr');
     var info = document.createElement('td');
     info.setAttribute('colspan', '5');
@@ -125,13 +126,10 @@ NetBeans_PresetCustomizer._putNoPresets = function() {
     row.appendChild(info);
     this._rowContainer.appendChild(row);
 };
-// put presets to the table
-NetBeans_PresetCustomizer._putPresetsInternal = function(presets) {
+Consulo_PresetCustomizer._putPresetsInternal = function(presets) {
     var that = this;
-    var allPresetTypes = NetBeans_Preset.allTypes();
-    for (p in presets) {
+    for (var p in presets) {
         var preset = presets[p];
-        // row
         var row = document.createElement('tr');
         row.addEventListener('click', function() {
             that._rowSelected(this);
@@ -139,8 +137,8 @@ NetBeans_PresetCustomizer._putPresetsInternal = function(presets) {
         // type
         var type = document.createElement('td');
         var typeSelect = document.createElement('select');
-        for (i in allPresetTypes) {
-            var presetType = allPresetTypes[i];
+        for (var i in Consulo_Preset_allTypes) {
+            var presetType = Consulo_Preset_allTypes[i];
             var option = document.createElement('option');
             option.setAttribute('value', presetType.ident);
             if (preset.type === presetType.ident) {
@@ -198,14 +196,12 @@ NetBeans_PresetCustomizer._putPresetsInternal = function(presets) {
             toolbar.appendChild(toolbarCheckbox);
             row.appendChild(toolbar);
         }
-        // append row
         this._rowContainer.appendChild(row);
         preset['_row'] = row;
         preset['_errors'] = [];
     }
 };
-// cleanup (remove presets from customizer)
-NetBeans_PresetCustomizer._cleanUp = function() {
+Consulo_PresetCustomizer._cleanUp = function() {
     this._presets = null;
     while (this._rowContainer.hasChildNodes()) {
         this._rowContainer.removeChild(this._rowContainer.firstChild);
@@ -213,90 +209,80 @@ NetBeans_PresetCustomizer._cleanUp = function() {
     this._activePreset = null;
     this._enableButtons();
 };
-// add a new preset
-NetBeans_PresetCustomizer._addPreset = function() {
-    var preset = new NetBeans_Preset(NetBeans_Preset.DESKTOP.ident, I18n.message('_New_hellip'), '800', '600', true, false);
+Consulo_PresetCustomizer._addPreset = function() {
+    var preset = {
+        type: Consulo_Preset_allTypes[0].ident,
+        displayName: I18n.message('_New_hellip'),
+        width: '800',
+        height: '600',
+        showInToolbar: true,
+        isDefault: false
+    };
     this._presets.push(preset);
     this._putPresets([preset]);
     this._enableButtons();
 };
-// remove the active preset
-NetBeans_PresetCustomizer._removePreset = function() {
-    // presets
+Consulo_PresetCustomizer._removePreset = function() {
     this._presets.splice(this._presets.indexOf(this._activePreset), 1);
-    // ui
     this._rowContainer.removeChild(this._activePreset['_row']);
     this._activePreset = null;
     this._enableButtons();
 };
-// move the active preset up
-NetBeans_PresetCustomizer._moveUpPreset = function() {
-    // presets
+Consulo_PresetCustomizer._moveUpPreset = function() {
     this._movePreset(this._activePreset, -1);
-    // ui
     var row = this._activePreset['_row'];
     var before = row.previousSibling;
     this._rowContainer.removeChild(row);
     this._rowContainer.insertBefore(row, before);
     this._enableButtons();
 };
-// move the active preset down
-NetBeans_PresetCustomizer._moveDownPreset = function() {
-    // presets
+Consulo_PresetCustomizer._moveDownPreset = function() {
     this._movePreset(this._activePreset, +1);
-    // ui
     var row = this._activePreset['_row'];
     var after = row.nextSibling;
     this._rowContainer.removeChild(row);
     nbInsertAfter(row, after);
     this._enableButtons();
 };
-// move the preset up or down
-NetBeans_PresetCustomizer._movePreset = function(preset, shift) {
+Consulo_PresetCustomizer._movePreset = function(preset, shift) {
     var index = this._presets.indexOf(preset);
     var tmp = this._presets[index];
     this._presets[index] = this._presets[index + shift];
     this._presets[index + shift] = tmp;
 };
-// save presets to the central storage and redraw them
-NetBeans_PresetCustomizer._save = function() {
-    for (i in this._presets) {
+Consulo_PresetCustomizer._save = function() {
+    for (var i in this._presets) {
         var preset = this._presets[i];
         delete preset['_row'];
         delete preset['_errors'];
     }
-    NetBeans_Presets.setPresets(this._presets);
+    // MV3: send presets to background via messaging
+    chrome.runtime.sendMessage({type: 'setPresets', presets: this._presets});
     this._cleanUp();
     this._hide();
 };
-// cancel customizer
-NetBeans_PresetCustomizer._cancel = function() {
+Consulo_PresetCustomizer._cancel = function() {
     this._cleanUp();
     this._hide();
 };
-// switch help
-NetBeans_PresetCustomizer._switchHelp = function() {
+Consulo_PresetCustomizer._switchHelp = function() {
     var help = document.getElementById('help');
     var displayed = help.style.display == 'block';
     help.style.display = displayed ? 'none' : 'block';
     this._moreHelpButton.innerHTML = I18n.message(displayed ? '_More_hellip' : '_Less_hellip');
 };
-// reset warnings
-NetBeans_PresetCustomizer._resetWarnings = function() {
-    NetBeans_Warnings.reset();
+Consulo_PresetCustomizer._resetWarnings = function() {
+    chrome.runtime.sendMessage({type: 'resetWarnings'});
     this._resetWarningsButton.innerHTML = I18n.message('_Done');
     this._resetWarningsButton.setAttribute('disabled', 'disabled');
 };
-// callback when row is selected
-NetBeans_PresetCustomizer._rowSelected = function(row) {
+Consulo_PresetCustomizer._rowSelected = function(row) {
     if (this._activePreset !== null) {
         if (this._activePreset['_row'] === row) {
-            // repeated click => ignore
             return;
         }
         this._activePreset['_row'].className = '';
     }
-    // select
     var that = this;
     for (var i in this._presets) {
         var preset = this._presets[i];
@@ -307,15 +293,12 @@ NetBeans_PresetCustomizer._rowSelected = function(row) {
     }
     this._enableButtons();
 };
-// enable/disable action buttons (based on the active preset)
-NetBeans_PresetCustomizer._enableButtons = function() {
+Consulo_PresetCustomizer._enableButtons = function() {
     this._enablePresetButtons();
     this._enableMainButtons();
 };
-// enable/disable preset buttons (based on the active preset)
-NetBeans_PresetCustomizer._enablePresetButtons = function() {
+Consulo_PresetCustomizer._enablePresetButtons = function() {
     if (this._activePreset !== null) {
-        // any preset selected
         if (this._activePreset.isDefault) {
             this._removePresetButton.setAttribute('disabled', 'disabled');
         } else {
@@ -333,7 +316,6 @@ NetBeans_PresetCustomizer._enablePresetButtons = function() {
         }
     } else {
         if (this._presets === null) {
-            // nb not running
             this._addPresetButton.setAttribute('disabled', 'disabled');
         }
         this._removePresetButton.setAttribute('disabled', 'disabled');
@@ -341,13 +323,12 @@ NetBeans_PresetCustomizer._enablePresetButtons = function() {
         this._moveDownPresetButton.setAttribute('disabled', 'disabled');
     }
 };
-// enable/disable customizer buttons
-NetBeans_PresetCustomizer._enableMainButtons = function() {
+Consulo_PresetCustomizer._enableMainButtons = function() {
     var anyError = false;
     if (this._presets === null) {
         anyError = true;
     } else {
-        for (i in this._presets) {
+        for (var i in this._presets) {
             if (this._presets[i]['_errors'].length) {
                 anyError = true;
                 break;
@@ -360,10 +341,8 @@ NetBeans_PresetCustomizer._enableMainButtons = function() {
         this._okButton.removeAttribute('disabled');
     }
 };
-// callback when preset type changes
-NetBeans_PresetCustomizer._typeChanged = function(input) {
+Consulo_PresetCustomizer._typeChanged = function(input) {
     if (this._activePreset === null) {
-        // select change event fired before row click event => select the closest row
         var row = input;
         while (true) {
             row = row.parentNode;
@@ -373,43 +352,36 @@ NetBeans_PresetCustomizer._typeChanged = function(input) {
         }
         this._rowSelected(row);
     }
-    this._activePreset.type = NetBeans_Preset.typeForIdent(input.value).ident;
+    this._activePreset.type = typeForIdent(input.value).ident;
 };
-// callback when preset title changes
-NetBeans_PresetCustomizer._titleChanged = function(input) {
+Consulo_PresetCustomizer._titleChanged = function(input) {
     var that = this;
     this._checkField(input, 'displayName', function(value) {
         return that._validateNotEmpty(value);
     });
 };
-// callback when preset width changes
-NetBeans_PresetCustomizer._widthChanged = function(input) {
+Consulo_PresetCustomizer._widthChanged = function(input) {
     var that = this;
     this._checkField(input, 'width', function(value) {
         return that._validateNumber(value);
     });
 };
-// callback when preset height changes
-NetBeans_PresetCustomizer._heightChanged = function(input) {
+Consulo_PresetCustomizer._heightChanged = function(input) {
     var that = this;
     this._checkField(input, 'height', function(value) {
         return that._validateNumber(value);
     });
 };
-// callback when preset toolbar changes
-NetBeans_PresetCustomizer._toolbarChanged = function(input) {
+Consulo_PresetCustomizer._toolbarChanged = function(input) {
     this._activePreset.showInToolbar = input.checked;
 };
-// check whether the value is not empty
-NetBeans_PresetCustomizer._validateNotEmpty = function(value) {
+Consulo_PresetCustomizer._validateNotEmpty = function(value) {
     return value != null && value.trim().length > 0;
 };
-// check whether the value is a number
-NetBeans_PresetCustomizer._validateNumber = function(value) {
+Consulo_PresetCustomizer._validateNumber = function(value) {
     return value != null && value.search(/^[1-9][0-9]*$/) != -1;
 };
-// check the given input, for the given key with the given validation callback
-NetBeans_PresetCustomizer._checkField = function(input, key, validation) {
+Consulo_PresetCustomizer._checkField = function(input, key, validation) {
     var value = input.value;
     var index = this._activePreset['_errors'].indexOf(key);
     if (validation(value)) {
@@ -428,7 +400,6 @@ NetBeans_PresetCustomizer._checkField = function(input, key, validation) {
 };
 
 /*** ~Helpers ***/
-// mirror function to element.insertBefore()
 function nbInsertAfter(newElement, targetElement) {
 	var parent = targetElement.parentNode;
 	if (parent.lastchild === targetElement) {
@@ -437,21 +408,24 @@ function nbInsertAfter(newElement, targetElement) {
 		parent.insertBefore(newElement, targetElement.nextSibling);
     }
 }
-// add CSS class to the given element
 function nbAddCssClass(element, cssClass) {
     var className = element.className;
     if (className.indexOf(cssClass) !== -1) {
-        // already has this class
         return;
     }
     element.className = (element.className.trim() + ' ' + cssClass);
 }
-// remove CSS class to the given element
 function nbRemoveCssClass(element, cssClass) {
     element.className = element.className.replace(cssClass, '').trim();
 }
 
 // run!
 window.addEventListener('load', function() {
-    NetBeans_PresetCustomizer.show(NetBeans_Presets.getPresets(true));
+    // MV3: get state then presets via messaging
+    chrome.runtime.sendMessage({type: 'getState'}, function(state) {
+        INFOBAR = state.INFOBAR;
+        chrome.runtime.sendMessage({type: 'getPresets', copy: true}, function(presetsResponse) {
+            Consulo_PresetCustomizer.show(presetsResponse.presets);
+        });
+    });
 }, false);

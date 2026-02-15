@@ -28,4 +28,4 @@ chrome.devtools.inspectedWindow.onResourceContentCommitted.addListener(function(
     });
 });
 
-chrome.devtools.panels.create('NetBeans', '../img/presets/netbeans16.png', '../html/devtools-nb.html');
+chrome.devtools.panels.create('Consulo', '../img/icon16.png', '../html/devtools-panel.html');

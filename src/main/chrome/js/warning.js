@@ -17,20 +17,19 @@
  * under the License.
  */
 
-// references from bg page
-var NetBeans_Warnings = chrome.extension.getBackgroundPage().NetBeans_Warnings;
+// MV3: No access to background page, use messaging
 
 /**
- * Warning - the content is set by the URL ident (accessible via <code>window.location.hash</code>).
+ * Warning - the content is set by the URL ident (accessible via window.location.hash).
  */
-var NetBeans_Warning = {};
+var Consulo_Warning = {};
 
-NetBeans_Warning._ident = null;
-NetBeans_Warning._okButton = null;
-NetBeans_Warning._doNotShowAgainButton = null;
+Consulo_Warning._ident = null;
+Consulo_Warning._okButton = null;
+Consulo_Warning._doNotShowAgainButton = null;
 
-NetBeans_Warning.init = function() {
-    if (NetBeans_Warning._ident !== null) {
+Consulo_Warning.init = function() {
+    if (Consulo_Warning._ident !== null) {
         return;
     }
     this._ident = window.location.hash.substring(1);
@@ -39,26 +38,28 @@ NetBeans_Warning.init = function() {
     this._showContent();
     this._registerEvents();
 };
-// show proper content of the page
-NetBeans_Warning._showContent = function() {
+Consulo_Warning._showContent = function() {
     document.getElementById(this._ident).style.display = 'block';
 };
-// register events
-NetBeans_Warning._registerEvents = function() {
+Consulo_Warning._registerEvents = function() {
     var that = this;
     this._okButton.addEventListener('click', function() {
         that._close();
     }, false);
 };
-NetBeans_Warning._close = function() {
+Consulo_Warning._close = function() {
     this._doNotShowAgain();
     window.close();
 };
-NetBeans_Warning._doNotShowAgain = function() {
-    NetBeans_Warnings.enable(this._ident, !this._doNotShowAgainButton.checked);
+Consulo_Warning._doNotShowAgain = function() {
+    chrome.runtime.sendMessage({
+        type: 'enableWarning',
+        ident: this._ident,
+        enabled: !this._doNotShowAgainButton.checked
+    });
 };
 
 // run!
 window.addEventListener('load', function() {
-    NetBeans_Warning.init();
+    Consulo_Warning.init();
 }, false);
